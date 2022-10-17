@@ -1,4 +1,5 @@
 import threefish256 as tf
+import threefish_utils as tf_util
 
 
 def print_cipher(c):
@@ -25,7 +26,7 @@ def print_message(d):
 
 
 if __name__ == '__main__':
-    # message should be presented as little endian manually
+    # message should be presented as little endian before calling encrypt function
     key = [0, 0, 0, 0]
     tweak = [0, 0]
     message = [0, 0, 0, 0]
@@ -57,3 +58,37 @@ if __name__ == '__main__':
     d_str = print_message(d)
     assert '1cbf83be6f57d8e066bab2ea0e910b0a062cd53a979a11496145474dc0e89e86' == c_str
     assert '626c6f636b206f6620646174612c73616d65206c656e677468206173206b6579' == d_str
+
+
+    # the same as previous but getting data from file
+    dataInBytes = tf_util.readfile('./message32')
+    dataWithPadding = tf_util.padding256(dataInBytes)
+    listOfByteWords = tf_util.separate64(dataWithPadding)
+    message = tf_util.little_endian64(listOfByteWords)
+
+    c = tf.encrypt256(key, tweak, message)
+    d = tf.decrypt256(key, tweak, c)
+    c_str = print_cipher(c)
+    d_str = print_message(d)
+    assert '1cbf83be6f57d8e066bab2ea0e910b0a062cd53a979a11496145474dc0e89e86' == c_str
+    assert '626c6f636b206f6620646174612c73616d65206c656e677468206173206b6579' == d_str
+
+
+    # calculating large file
+    key = [0, 0, 0, 0]
+    tweak = [0, 0]
+    dataInBytes = tf_util.readfile('./file_1mb')
+    dataWithPadding = tf_util.padding256(dataInBytes)
+    listOfByteWords = tf_util.separate64(dataWithPadding)
+    message = tf_util.little_endian64(listOfByteWords)
+
+    c = []
+    for i in range(0, len(message), 4):
+        c += tf.encrypt256(key, tweak, message[i:i+4])
+
+    d = tf.decrypt256(key, tweak, c[0:4])
+    c_str = print_cipher(c[0:4])
+    d_str = print_message(d)
+    assert '6d0bcca6d1fbd6b63d56311751dee94e6e14ed4daa52b9099c8af10600132d73' == c_str
+    assert '3130303031303030313030303130303031303030313030303130303031303030' == d_str
+
