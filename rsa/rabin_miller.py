@@ -19,10 +19,9 @@ def rabin_miller(num: int, rounds_num: int = 10) -> bool:
     elif num < 2 or (num % 2) == 0:
         return False
 
+    # presenting (num - 1) as 2^s * t
     t = num - 1
     s = 0
-
-    # presenting num - 1 as 2^s * t
     while t % 2 == 0:
         t = t // 2
         s += 1
