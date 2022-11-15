@@ -36,7 +36,7 @@ def generate_keys(key_size: int = 1024, is_default_e: bool = True) -> (PrivateKe
     """
     :param key_size: should be in range of [512, 4096] and multiple of 512
     :param is_default_e: use public exponent with default value is 65537, or generate another one. It might be the same
-    :return: tuple of tuples (private_key, public_key), private_key=(p, q, n, d), public_key=(n, e)
+    :return: tuple (private_key, public_key), private_key=(p, q, n, d), public_key=(n, e)
     """
     if key_size < 1 or key_size > 4096 or (key_size % 512) != 0:
         raise Exception('key_size should be in range of [512, 4096] and multiple of 512')
@@ -86,7 +86,7 @@ def verify_sign(public_key: PublicKeyRSA, signed_hash: int) -> int:
     """
     :param public_key: instance of PublicKey class
     :param signed_hash: length should be equal of key size like for PublicKey
-    :return: true if original hash in signed_hash equal hash_value, false otherwise
+    :return: hash signed by PrivateKey
     """
     n = public_key.n
     e = public_key.e

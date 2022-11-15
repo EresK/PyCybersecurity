@@ -1,11 +1,6 @@
 import hashlib
 import rsa
-import sys
 import rsa_algorithm as algo
-
-
-if sys.version_info < (3, 6):
-    import sha3
 
 
 def int_to_bytes(num: int) -> bytes:
@@ -13,8 +8,17 @@ def int_to_bytes(num: int) -> bytes:
     return num.to_bytes(bl, 'little') if (num.bit_length() % 8) == 0 else num.to_bytes(bl + 1, 'little')
 
 
+def int_to_bytes_big(num: int) -> bytes:
+    bl = num.bit_length() // 8
+    return num.to_bytes(bl, 'big') if (num.bit_length() % 8) == 0 else num.to_bytes(bl + 1, 'big')
+
+
 def bytes_to_int(bs: bytes) -> int:
-    return int.from_bytes(bs, 'little')
+    return int.from_bytes(bs, 'little', signed=False)
+
+
+def bytes_to_int_big(bs: bytes) -> int:
+    return int.from_bytes(bs, 'big', signed=False)
 
 
 def load_long_text(filename: str) -> str:
@@ -38,6 +42,29 @@ def test_ciphering(message: bytes):
           f'cipher:     {int_to_bytes(cipher).hex()}\n'
           f'cipher len: {len(int_to_bytes(cipher))}\n'
           f'decrypted:  {int_to_bytes(decrypted).hex()}\n'
+          f'>>>>>\n')
+
+
+def test_ciphering_with_padding(message: bytes):
+    key_size = 512
+    private_key, public_key = algo.generate_keys(key_size)
+
+    padded = rsa.pkcs1._pad_for_encryption(message, 64)
+    cipher = algo.encrypt(public_key, bytes_to_int_big(padded))
+    decrypted = rsa.decrypt(int_to_bytes_big(cipher), rsa.PrivateKey(private_key.n,
+                                                                     public_key.e,
+                                                                     private_key.d,
+                                                                     private_key.p,
+                                                                     private_key.q))
+
+    assert message == decrypted
+
+    print(f'>>>>> TEST Ciphering with padding\n'
+          f'key size:   {key_size}\n'
+          f'origin:     {message.hex()}\n'
+          f'cipher:     {int_to_bytes(cipher).hex()}\n'
+          f'cipher len: {len(int_to_bytes(cipher))}\n'
+          f'decrypted:  {decrypted.hex()}\n'
           f'>>>>>\n')
 
 
@@ -113,14 +140,18 @@ def test_with_rsa_algorithm_keys(message: bytes):
 if __name__ == '__main__':
     # Short message ciphering
     message_short = 'Hello, World!'
-    test_ciphering(message_short.encode('utf8'))
+    message_short_bytes = message_short.encode('utf8')
+
+    test_ciphering(message_short_bytes)
+    test_ciphering_with_padding(message_short_bytes)
 
     # Long file's hash verification
     message_long = load_long_text('./long_text')
     sha3 = hashlib.sha3_256(message_long.encode('utf8'))
     hash_long_file = sha3.digest()
+
     test_sign_and_verify_hash(hash_long_file)
 
     # Testing with keys of rsa lib and rsa_algorithm lib
-    test_with_rsa_keys(message_short.encode('utf8'))
-    test_with_rsa_algorithm_keys(message_short.encode('utf8'))
+    test_with_rsa_keys(message_short_bytes)
+    test_with_rsa_algorithm_keys(message_short_bytes)
