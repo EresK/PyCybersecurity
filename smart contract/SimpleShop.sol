@@ -26,18 +26,22 @@ contract SimpleShop {
         _;
     }
 
+    function pushItem(string memory title, string memory description, uint price) internal {
+        items.push(Item(id_sequence++, title, description, price));
+    }
+
     function initItems() internal {
-        items.push(Item(id_sequence++, "Bread", "Food", 100));
-        items.push(Item(id_sequence++, "Choco", "Food", 1000));
-        items.push(Item(id_sequence++, "Truffles", "Something very rare", 1000000000000000000));
+        pushItem("Bread", "Food", 100);
+        pushItem("Choco", "Food", 1000);
+        pushItem("Truffles", "Something very rare", 1000000000000000000);
     }
 
     function getItems() public view returns(Item[] memory) {
         return items;
     }
 
-    function addItem(Item memory item) external isOwner {
-        items.push(item);
+    function addItem(string memory title, string memory description, uint price) external isOwner {
+        pushItem(title, description, price);
     }
 
     function withdrawAll() external payable isOwner {
